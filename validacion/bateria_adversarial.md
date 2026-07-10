@@ -1,9 +1,3 @@
----
-noteId: "715135307c6311f182a82541cc79c7e6"
-tags: []
-
----
-
 # Bateria adversarial
 
 **Nadie ejecuta esta bateria sobre su propio agente.** Cada participante la aplica sobre

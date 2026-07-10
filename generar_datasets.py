@@ -1,49 +1,186 @@
-# MANIFEST de assets multimodales, Ejercicio 2
+"""
+Generador de datasets sinteticos para el Taller 3: IA Avanzada (Langdock).
+Los defectos NO son accidentales. Estan plantados y documentados en
+soluciones/defectos_plantados.md
 
-Los archivos binarios (imagenes y audios) no se versionan en este repositorio.
-Este manifiesto especifica **exactamente** que debe contener cada asset, que defecto
-encarna y cual es el veredicto correcto segun `politica_gastos.pdf`.
+Uso: python generar_datasets.py
+"""
+import random
+import csv
+from datetime import date, timedelta
 
-Producirlos toma unos 20 minutos: fotografiar boletas reales (o imprimir las
-plantillas de `plantillas_boleta.md`), y grabar los audios con el celular.
+random.seed(20260710)
 
-Nomenclatura: `NN_descripcion.ext`. Cargar todo en `imagenes/` y `audios/`.
+OUT1 = "datasets/ejercicio1"
+OUT2 = "datasets/ejercicio2"
 
----
+# ---------------------------------------------------------------------------
+# Utilidades de RUT chileno
+# ---------------------------------------------------------------------------
+def dv(num: int) -> str:
+    s, m = 0, 2
+    for d in reversed(str(num)):
+        s += int(d) * m
+        m = 9 if m == 7 else m + 1
+    r = 11 - (s % 11)
+    return {11: "0", 10: "K"}.get(r, str(r))
 
-## Imagenes
 
-| # | Archivo | Contenido | Defecto plantado | Veredicto correcto |
-|---|---|---|---|---|
-| 1 | `01_boleta_almuerzo.jpg` | Boleta de restaurante. RUT 76.412.883-K, 03-07-2026, total $18.400. CC-1010. | ninguno | APROBAR |
-| 2 | `02_boleta_bencina.jpg` | Boleta de servicentro. RUT 96.856.780-2, 03-07-2026, total $52.000. Categoria Transporte. CC-1020. | supera el tope de $40.000 | ESCALAR a jefatura |
-| 3 | `03_boleta_materiales.jpg` | Boleta ferreteria. RUT 77.033.190-4, 01-07-2026, total $96.500. CC-2010. | ninguno | APROBAR |
-| 4 | `04_boleta_borrosa.jpg` | Misma boleta que #3, fotografiada fuera de foco. El total no se lee. | ilegibilidad, confianza esperada < 0,70 | ESCALAR a revision manual |
-| 5 | `05_boleta_duplicada.jpg` | La boleta #1 fotografiada desde otro angulo y con otra luz. | duplicidad: mismo RUT + fecha + total | RECHAZAR por duplicidad |
-| 6 | `06_planilla_manuscrita.jpg` | Hoja cuadriculada escrita a mano con tres gastos y una suma. Sin RUT emisor. | no es boleta ni factura | RECHAZAR |
-| 7 | `07_captura_dashboard.png` | Captura de un dashboard de Power BI con un KPI de gasto mensual. | no es respaldo de gasto, es un reporte | RECHAZAR |
-| 8 | `08_foto_perro.jpg` | Fotografia de un perro. | entrada fuera de dominio | RECHAZAR |
-| 9 | `09_boleta_cc_cerrado.jpg` | Boleta valida, RUT 76.100.220-1, 02-07-2026, total $14.900, imputada a **CC-9090**. | centro de costo con `activo = 0` | RECHAZAR |
+def rut_limpio(num: int) -> str:
+    return f"{num}-{dv(num)}"
 
-## Audios
 
-| # | Archivo | Guion aproximado (30 s) | Defecto plantado | Efecto esperado |
-|---|---|---|---|---|
-| A | `A_relato_coherente.mp3` | "Almorce con el cliente el tres de julio, gaste dieciocho mil cuatrocientos pesos, va al centro de costo diez diez." | ninguno | refuerza APROBAR de #1 |
-| B | `B_relato_contradictorio.mp3` | "Cargue bencina el tres de julio, fueron treinta y ocho mil pesos, alcanza justo dentro del tope." | contradice el total de #2 ($52.000 en la boleta) | RECHAZAR y escalar a Contraloria |
+def rut_con_puntos(num: int) -> str:
+    return f"{num:,}".replace(",", ".") + "-" + dv(num)
 
----
 
-## Plantillas de boleta (si no dispone de boletas reales)
+def rut_sucio(num: int) -> str:
+    """Devuelve el RUT en uno de cuatro formatos incompatibles."""
+    estilo = random.random()
+    if estilo < 0.40:
+        return rut_con_puntos(num)
+    if estilo < 0.75:
+        return rut_limpio(num)
+    if estilo < 0.90:
+        return f"{num}{dv(num)}"              # sin guion
+    return rut_limpio(num).lower()            # k minuscula
 
-Genere las boletas #1, #2, #3, #5 y #9 con `plantillas_boleta.md`, imprimalas,
-arruguelas un poco y fotografielas con el celular. La imperfeccion es parte del
-ejercicio: una imagen escaneada y perfecta no ensena nada sobre extraccion multimodal.
 
-Para la #4, fotografie la #3 con la camara en movimiento.
+# ---------------------------------------------------------------------------
+# Dimension de clientes
+# ---------------------------------------------------------------------------
+NOMBRES = [
+    "Comercial Andina", "Distribuidora Sur", "Ferreteria El Roble", "Minimarket Ñuñoa",
+    "Almacenes Pacifico", "Importadora Cordillera", "Retail Maipo", "Bodegas Elqui",
+    "Abarrotes Los Andes", "Supermercados Biobio", "Casa Matriz Valparaiso",
+    "Proveedora Atacama", "Mayorista Chiloe", "Tiendas Aconcagua", "Central Rancagua",
+    "Depositos Talca", "Comercial Osorno", "Distribuidora Arica", "El Trebol SpA",
+    "Surtidora Coronel", "Comercial Temuco", "Almacen Puerto Montt", "Insumos Iquique",
+    "Grupo Curico", "Provisiones Chillan",
+]
+SEGMENTOS = ["Mayorista", "Minorista", "Institucional"]
+REGIONES = ["RM", "Valparaiso", "Biobio", "Araucania", "Antofagasta", "Los Lagos"]
 
-## Regla del facilitador
+base_ruts = [random.randint(70_000_000, 79_999_999) for _ in range(25)]
+clientes = []
+for i, num in enumerate(base_ruts):
+    inicio = date(2023, 1, 1) + timedelta(days=random.randint(0, 400))
+    clientes.append({
+        "rut_cliente": rut_limpio(num),
+        "razon_social": NOMBRES[i],
+        "segmento": random.choice(SEGMENTOS),
+        "region": random.choice(REGIONES),
+        "limite_credito": random.choice([2_000_000, 5_000_000, 10_000_000, 25_000_000]),
+        "fecha_inicio_vigencia": inicio.isoformat(),
+        "fecha_fin_vigencia": "",
+        "vigente": 1,
+    })
 
-No revele el veredicto correcto antes de la ronda de validacion. El valor pedagogico
-esta en que cada participante descubra, de boca de su vecino de dupla, que su propio
-agente aprobo la foto del perro.
+# --- DEFECTO SCD2 #1: dos filas vigentes para el mismo cliente (rut indice 3)
+c = dict(clientes[3])
+c["segmento"] = "Institucional"
+c["limite_credito"] = 40_000_000
+c["fecha_inicio_vigencia"] = "2025-03-01"
+c["vigente"] = 1
+clientes.append(c)
+
+# --- DEFECTO SCD2 #2: rangos de vigencia solapados (indice 10)
+c = dict(clientes[10])
+c["region"] = "RM"
+c["fecha_inicio_vigencia"] = "2024-06-01"
+c["fecha_fin_vigencia"] = "2025-12-31"
+c["vigente"] = 0
+clientes.append(c)
+clientes[10]["fecha_inicio_vigencia"] = "2024-01-01"   # se solapa con la fila anterior
+
+# --- DEFECTO: limite_credito como texto "NULL" en dos filas
+clientes[7]["limite_credito"] = "NULL"
+clientes[18]["limite_credito"] = "NULL"
+
+random.shuffle(clientes)
+with open(f"{OUT1}/clientes.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.DictWriter(f, fieldnames=list(clientes[0].keys()))
+    w.writeheader()
+    w.writerows(clientes)
+
+# ---------------------------------------------------------------------------
+# Hechos de venta
+# ---------------------------------------------------------------------------
+PRODUCTOS = [f"SKU-{n:04d}" for n in range(1001, 1041)]
+CANALES = ["Tienda", "Ecommerce", "Televenta", "Distribuidor"]
+VENDEDORES = ["V-01", "V-02", "V-03", "V-04", "V-05", "V-06"]
+
+def fecha_sucia(d: date) -> str:
+    estilo = random.random()
+    if estilo < 0.55:
+        return d.isoformat()                       # 2025-03-14
+    if estilo < 0.85:
+        return d.strftime("%d-%m-%Y")              # 14-03-2025
+    return d.strftime("%d/%m/%y")                  # 14/03/25
+
+
+filas = []
+inicio = date(2025, 1, 1)
+for i in range(1, 14_801):
+    d = inicio + timedelta(days=random.randint(0, 364))
+    cantidad = random.randint(1, 60)
+    unitario = random.choice([1990, 3490, 5990, 8990, 12990, 24990, 49990])
+    neto = cantidad * unitario
+    tipo = "VENTA"
+    # --- DEFECTO: notas de credito como monto negativo, sin columna que las marque
+    if random.random() < 0.022:
+        neto = -neto
+        tipo = "VENTA"          # a proposito: el tipo NO revela la nota de credito
+    filas.append({
+        "id_venta": f"F-{i:06d}",
+        "fecha": fecha_sucia(d),
+        "rut_cliente": rut_sucio(random.choice(base_ruts)),
+        "id_producto": random.choice(PRODUCTOS),
+        "cantidad": cantidad,
+        "monto_neto": neto,
+        "canal": random.choice(CANALES) if random.random() > 0.03 else "NULL",
+        "vendedor": random.choice(VENDEDORES) if random.random() > 0.05 else "NULL",
+        "tipo_documento": tipo,
+    })
+
+# --- DEFECTO: 120 duplicados exactos
+for f_ in random.sample(filas, 120):
+    filas.append(dict(f_))
+
+# --- DEFECTO: 15 id_venta repetidos con montos distintos (duplicado NO exacto)
+for f_ in random.sample(filas[:14_800], 15):
+    g = dict(f_)
+    g["monto_neto"] = int(g["monto_neto"]) + random.randint(1000, 90_000)
+    filas.append(g)
+
+# --- DEFECTO: 40 filas con monto como string y coma decimal
+for f_ in random.sample(filas, 40):
+    f_["monto_neto"] = f"{abs(int(f_['monto_neto']))},00"
+
+random.shuffle(filas)
+with open(f"{OUT1}/ventas_2025.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.DictWriter(f, fieldnames=list(filas[0].keys()))
+    w.writeheader()
+    w.writerows(filas)
+
+# ---------------------------------------------------------------------------
+# Centros de costo (Ejercicio 2)
+# ---------------------------------------------------------------------------
+centros = [
+    ("CC-1010", "Operaciones Terreno Norte", "M. Fuentes", 1_200_000, 1),
+    ("CC-1020", "Operaciones Terreno Centro", "P. Alvarado", 1_800_000, 1),
+    ("CC-1030", "Operaciones Terreno Sur", "R. Sandoval", 900_000, 1),
+    ("CC-2010", "Mantenimiento", "J. Rivas", 2_500_000, 1),
+    ("CC-2020", "Logistica", "C. Herrera", 3_000_000, 1),
+    ("CC-3010", "Comercial", "A. Bustos", 1_500_000, 1),
+    ("CC-9090", "Proyecto Piloto Cerrado", "sin asignar", 0, 0),   # activo = 0, trampa
+]
+with open(f"{OUT2}/centros_costo.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["codigo", "nombre", "responsable", "tope_mensual_clp", "activo"])
+    w.writerows(centros)
+
+print("Datasets generados.")
+print(f"  ventas_2025.csv : {len(filas)} filas")
+print(f"  clientes.csv    : {len(clientes)} filas")
+print(f"  centros_costo.csv: {len(centros)} filas")

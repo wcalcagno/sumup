@@ -1,9 +1,3 @@
----
-noteId: "4bfa2fd07c6311f182a82541cc79c7e6"
-tags: []
-
----
-
 # Agente: Analista de Cartera, Retail Andes
 
 Configuracion en Langdock:

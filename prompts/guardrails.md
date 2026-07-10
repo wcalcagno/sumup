@@ -1,9 +1,3 @@
----
-noteId: "486a79607c6311f182a82541cc79c7e6"
-tags: []
-
----
-
 # Nodos de validacion
 
 ## 1. Nodo `transcribir_y_contrastar`
