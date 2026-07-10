@@ -3,11 +3,24 @@
 **Plataforma:** Langdock
 **Duracion:** 2 horas
 **Facilitador:** Walter E. Calcagno, Microsoft MVP Data Platform
-**Fecha:** 10 de julio de 2026
 
 > La IA acelera. El criterio firma.
 
 ---
+
+## Que vas a construir
+
+Dos cosas, y ninguna es un chatbot que responda bien.
+
+**Un agente** que contesta preguntas de negocio sobre datasets internos, que cita el
+archivo y la columna de cada cifra que entrega, y que se niega explicitamente cuando la
+respuesta no esta en sus fuentes.
+
+**Un workflow multimodal** que procesa fotografias, audio y documentos, y que escala a un
+humano antes de aprobar lo que no debe aprobar solo.
+
+No es un taller de prompting. Es un taller sobre donde poner la firma humana en un
+proceso automatizado.
 
 ## Contenidos
 
@@ -19,131 +32,142 @@
 
 | Bloque | Min | Contenido |
 |---|---|---|
-| Apertura | 10 | Encuadre y reglas del taller |
+| Apertura | 10 | Encuadre y reglas |
 | Ejercicio 1 | 45 | El Analista de Cartera que no puede mentir |
 | Puesta en comun | 10 | Autopsia de errores |
 | Ejercicio 2 | 45 | Mesa de Recepcion Multimodal |
 | Cierre | 10 | Rubrica y checklist de produccion |
 
+---
+
+## Antes de empezar
+
+**No hay nada que instalar.** Langdock corre en el navegador y Python se ejecuta en el
+servidor. No necesitas Python, ni Anaconda, ni Git.
+
+Verifica estos cinco puntos hoy, te toma cinco minutos:
+
+1. Abro Langdock en Chrome o Edge y veo mi workspace
+2. En el selector de modelo aparecen Claude Opus, Sonnet y Haiku
+3. Abro un chat, adjunto un CSV cualquiera y le pido que cuente las filas. Responde con
+   un numero
+4. Veo la opcion de crear un **Agente**
+5. Veo la opcion de crear un **Workflow**
+
+Si alguno falla, avisa antes de la sesion. Es configuracion de administrador.
+
+**Descarga este repositorio y descomprimelo en tu escritorio**, con los archivos a un
+clic. El dialogo de adjuntar archivo del navegador es donde se pierden los minutos.
+
+## Los datos
+
+Los datasets ya estan generados y versionados. **No hay que ejecutar nada.** Trabaja
+directamente sobre:
+
+- `datasets/ejercicio1/` para el Analista de Cartera
+- `datasets/ejercicio2/` para la Mesa de Recepcion
+
+Los datos son sinteticos. Retail Andes SpA no existe. Los defectos que encuentres en
+ellos, en cambio, existen en todas partes.
+
+---
+
 ## Formato
 
-**Trabajo individual.** Cada participante tiene su propio notebook y su propia sesion en
-Langdock. Cada uno construye su agente completo, de principio a fin. Nadie se apoya en
-el compañero que sabe Python.
+**Trabajo individual.** Cada uno construye su agente completo, de principio a fin. Nadie
+se apoya en el compañero que sabe Python.
 
-La validacion, en cambio, es **cruzada y en duplas**. Terminada la construccion, cada
-participante se sienta frente al notebook del vecino y aplica la bateria adversarial
-sobre el agente ajeno, mientras el vecino hace lo mismo con el suyo. Luego se devuelven
-los hallazgos.
+**Validacion cruzada en duplas.** Terminada la construccion, te sientas frente al
+notebook de tu vecino y aplicas la bateria de `validacion/bateria_adversarial.md` sobre
+su agente, mientras el hace lo mismo con el tuyo. Despues se devuelven los hallazgos.
 
-El motivo es sencillo: atacar el agente propio prueba la honestidad intelectual de uno.
-Atacar el agente ajeno prueba el artefacto. Solo lo segundo produce un hallazgo que el
-autor no habia anticipado, porque nadie encuentra el supuesto que no sabe que tiene.
+Atacar el agente propio prueba la honestidad intelectual de uno. Atacar el agente ajeno
+prueba el artefacto. Solo lo segundo produce un hallazgo que el autor no habia
+anticipado, porque nadie encuentra el supuesto que no sabe que tiene.
 
-Si el numero de participantes es impar, el facilitador toma el notebook sobrante y ataca
-sin piedad. Es la mejor demostracion del dia.
+Se ataca el artefacto, no a la persona. Un hallazgo se enuncia "el agente aprobo X sin
+citar la politica", nunca "configuraste mal el prompt".
 
-### Convencion de nombres (obligatoria)
+### Convencion de nombres, obligatoria
 
-Con 20 o 30 personas en un mismo workspace, los objetos colisionan. Cada participante
-sufija sus objetos con sus iniciales:
+Somos muchos en un mismo workspace. Sufija tus objetos con tus iniciales:
 
 | Objeto | Nombre |
 |---|---|
 | Agente ejercicio 1 | `analista_cartera_XX` |
 | Workflow ejercicio 2 | `mesa_recepcion_XX` |
-| Formulario | `rendicion_XX` |
+| Formulario del trigger | `rendicion_XX` |
 
-La **Carpeta de Conocimiento la crea el facilitador una sola vez** (`politica_retail_andes`)
-y la comparte con todo el workspace en rol Viewer. Nadie sube el PDF de nuevo. Treinta
-copias del mismo documento embebido es exactamente el problema de gobierno de datos que
-este taller enseña a no cometer.
+La Carpeta de Conocimiento la crea el facilitador **una sola vez** y la comparte en rol
+Viewer. Nadie sube el PDF de nuevo. Treinta copias del mismo documento embebido, sin
+version canonica y sin forma de saber cual leyo cada agente, es precisamente el problema
+que este taller enseña a no cometer.
 
-## Prerrequisitos
+### Los prompts
 
-- Un notebook por participante, con sesion iniciada antes de que empiece el taller
-- Cuenta en Langdock con acceso a modelos Anthropic (Claude Opus, Sonnet, Haiku)
-- Herramientas habilitadas por el administrador: Analisis de Datos, Carpetas de
-  Conocimiento, Workflows
-- Permiso para crear Agentes y compartirlos en el workspace
+En `prompts/` estan los system prompts listos para pegar. Usarlos no es hacer trampa: la
+nota no esta en escribir el prompt, esta en lo que sobrevive al ataque de tu vecino.
 
-Verificar antes del taller: una herramienta esta disponible solo si esta habilitada en
-el workspace, habilitada en las preferencias del usuario, habilitada en el agente, y
-soportada por el modelo elegido. Las cuatro condiciones, simultaneamente.
+---
 
-## Por que tres modelos
+## Ejercicio 1: El Analista de Cartera que no puede mentir
 
-| Nodo | Modelo | Razon |
+Retail Andes SpA. La Gerencia Comercial pide cifras de cartera. Exige que toda cifra sea
+auditable contra el dato fuente y que toda pregunta fuera de alcance reciba una negativa
+explicita.
+
+| Min | Tarea | Como |
 |---|---|---|
-| Analista, extraccion, contraste | Claude Sonnet | Salida estructurada y tool use, temperatura baja |
-| Validacion adversarial | Claude Opus | Razonamiento sobre reglas en conflicto |
-| Clasificacion de veredicto | Claude Haiku | Alto volumen, decision determinista, costo bajo |
+| 8 | Diagnostico de ingesta con Analisis de Datos. Anota cinco defectos por escrito | individual |
+| 4 | Intenta subir el CSV a una Carpeta de Conocimiento. Observa que pasa | individual |
+| 20 | Construye `analista_cartera_XX` con el prompt de `prompts/agente_analista.md` | individual |
+| 7 | Ejecuta la bateria adversarial sobre el agente de tu vecino | en duplas |
+| 6 | Recibe los hallazgos sobre el tuyo y clasificalos | en duplas |
 
-Elegir modelo es una decision de arquitectura, no de gusto. Un pipeline con un solo
-modelo para todo o paga de mas o razona de menos.
+**Entregable.** Agente compartido con el facilitador en rol Viewer, la hoja de las cinco
+pruebas anotada por tu vecino, y un parrafo respondiendo: que defecto de dato haria
+inviable poner esto en produccion mañana?
+
+## Ejercicio 2: Mesa de Recepcion Multimodal
+
+Rendiciones de gastos de terreno. Entran fotos de boletas, un audio del trabajador y a
+veces una planilla escrita a mano. Salen tres veredictos posibles: aprobar, rechazar o
+escalar, con la regla de la politica citada textualmente.
+
+| Min | Tarea | Como |
+|---|---|---|
+| 12 | Extraccion multimodal a JSON estricto, con escala de confianza | individual |
+| 8 | Cruce contra `centros_costo.csv` y `politica_gastos.pdf` | individual |
+| 20 | Prototipo `mesa_recepcion_XX` con Guardrails y Human in the Loop | individual |
+| 5 | Somete al workflow de tu vecino el caso que crees que lo rompe | en duplas |
+
+**Entregable.** Workflow publicado en v1.0.0, captura de una corrida que atrapo un caso
+invalido, y una linea sobre que decision de ese flujo jamas deberia quedar sin firma
+humana.
+
+---
+
+## Reglas
+
+1. Nadie entrega una cifra sin trazabilidad.
+2. Cada uno construye su propio agente. No se reparte el trabajo.
+3. Nadie valida su propio agente.
+4. Un agente que responde todo esta reprobado antes de empezar.
+5. Al cierre, cada uno nombra en voz alta la decision de su flujo que requiere firma
+   humana. Sin leer. Si no la recuerda, no la diseño.
 
 ## Estructura
 
 ```
-datasets/       insumos con defectos plantados (ver soluciones/)
+datasets/       insumos de ambos ejercicios
 prompts/        system prompts listos para pegar en Langdock
 workflows/      especificacion nodo por nodo
 validacion/     bateria adversarial y rubrica
-soluciones/     solucionario (publicar al cierre)
-deck/           presentacion del taller
 ```
 
-## Ejercicio 1: El Analista de Cartera que no puede mentir
-
-Retail Andes SpA. La Gerencia pide cifras de cartera. Exige que toda cifra sea
-auditable contra el dato fuente y que toda pregunta fuera de alcance reciba una
-negativa explicita.
-
-1. Diagnostico de ingesta con Analisis de Datos (8 min, individual)
-2. Trampa deliberada: intentar subir el CSV a una Carpeta de Conocimiento (4 min)
-3. Construccion del agente `analista_cartera_XX` (20 min, individual)
-4. Validacion cruzada en duplas (13 min): 7 minutos atacando el agente del vecino,
-   6 minutos recibiendo y clasificando los hallazgos sobre el propio
-
-**Entregable:** agente compartido **con el facilitador** en rol Viewer (no con todo el
-workspace), tabla de las cinco pruebas anotada por el vecino, y un parrafo respondiendo:
-que defecto de dato haria inviable poner esto en produccion manana?
-
-## Ejercicio 2: Mesa de Recepcion Multimodal
-
-Rendiciones de gastos de terreno: fotos de boletas, audio del trabajador, planillas
-manuscritas. Extraer, validar contra la politica, y decidir.
-
-1. Extraccion multimodal con esquema JSON y escala de confianza (12 min, individual)
-2. Cruce con dato interno (8 min, individual)
-3. Prototipo en Workflow `mesa_recepcion_XX` con Guardrails y Human in the Loop (20 min)
-4. El caso que debe fallar (5 min, en duplas: cada uno somete el audio contradictorio al
-   workflow del vecino)
-
-**Entregable:** workflow publicado en v1.0.0, captura del run que atrapo la
-contradiccion, y una linea sobre que decision de ese flujo jamas deberia quedar sin
-firma humana.
-
-## Reglas del taller
-
-1. Nadie entrega una cifra sin trazabilidad.
-2. Cada participante construye su propio agente. No se reparte el trabajo.
-3. Nadie valida su propio agente. Se valida el del vecino, y el vecino valida el suyo.
-4. Un agente que responde todo esta reprobado antes de empezar.
-5. Al cierre, cada participante nombra en voz alta la decision de su flujo que requiere
-   firma humana. Sin leer. Si no la recuerda, no la diseño.
-
-## Generar los datasets
-
-```bash
-python generar_datasets.py
-python generar_politicas.py
-```
-
-Los assets multimodales (imagenes y audios) se producen segun
-`datasets/ejercicio2/MANIFEST.md`.
+El solucionario y los generadores de datos se publican **al cierre del taller**, no antes.
 
 ## Licencia
 
-CC BY 4.0. Atribucion: Walter E. Calcagno, autor de *Arquitectura e Ingenieria de
-Datos* (Anaya Multimedia, 2024).
+CC BY 4.0. Atribucion: Walter E. Calcagno, autor de *Arquitectura e Ingenieria de Datos*
+(Anaya Multimedia, 2024).
